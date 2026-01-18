@@ -222,5 +222,68 @@ export class App {
       event.preventDefault();
       this.showModal();
     }
+
+    // CMD+J (Mac) or Ctrl+J (Windows/Linux) - Select next attachment
+    if ((event.metaKey || event.ctrlKey) && event.key === 'j') {
+      event.preventDefault();
+      this.selectNextAttachment();
+    }
+
+    // CMD+K (Mac) or Ctrl+K (Windows/Linux) - Select previous attachment
+    if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+      event.preventDefault();
+      this.selectPreviousAttachment();
+    }
+  }
+
+  selectNextAttachment() {
+    const currentAttachments = this.filteredAttachments;
+    if (currentAttachments.length === 0) return;
+
+    const currentSelected = this.selectedAttachment();
+    if (!currentSelected) {
+      // No selection, select first item
+      this.selectAttachment(currentAttachments[0]);
+      return;
+    }
+
+    const currentIndex = currentAttachments.findIndex(a => a.id === currentSelected.id);
+    if (currentIndex === -1 || currentIndex === currentAttachments.length - 1) {
+      // Either the current item was not found (possible if we added a filter after selecting it)
+      // Or we're already at the end of the list. 
+
+      // Go back to the beginning
+      this.selectAttachment(currentAttachments[0]);
+      return;
+    }
+
+    
+
+    // Select next item
+    this.selectAttachment(currentAttachments[currentIndex + 1]);
+  }
+
+  selectPreviousAttachment() {
+    const currentAttachments = this.filteredAttachments;
+    if (currentAttachments.length === 0) return;
+
+    const currentSelected = this.selectedAttachment();
+    if (!currentSelected) {
+      // No selection, select last item
+      this.selectAttachment(currentAttachments[currentAttachments.length - 1]);
+      return;
+    }
+
+    const currentIndex = currentAttachments.findIndex(a => a.id === currentSelected.id);
+    if (currentIndex === -1 || currentIndex === 0) {
+      // Either the current item was not found (possible if we added a filter after selecting it)
+      // Or we're already at the beginning of the list. 
+
+      // Go back to the end
+      this.selectAttachment(currentAttachments[currentAttachments.length - 1]);
+    }
+
+    // Select previous item
+    this.selectAttachment(currentAttachments[currentIndex - 1]);
   }
 }
