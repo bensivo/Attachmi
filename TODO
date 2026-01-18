@@ -3,19 +3,23 @@
   - [x] search
   - [x] add
   - [x] prev/next
-  - [] edit
-  - [] save
-  - [] delete
+  - [] open (cmd+o)
+  - [] edit (cmd+e)
+  - [] save (cmd+s)
+  - [] delete (cmd+d)
 - bug: After adding attachment, it is not selected
+- feature: Get rid of ugle old-looking app header. Make it match the rest of the app, at least. 
 - feature: Description, screenshots, usage in Github. 
 - task: Test on another macbook
 - feature: Create logo
-- feature: Help icon with all the keyboard shortcuts
-- feature: Choose a color pallete
+- feature: Themes with different color palettes
 - feature: Light/Dark mode
+- feature: File preview
 - feature: Better search, filtering on the left sidebar
 - bug: App name is all lowercase
 - bug: order of files in list is reversed from expected
 - feature: collections of files
-- feature: add link
+- feature: add links too (not just files)
 - bug: on small screen sizes, "edit" and "delete" buttons get hidden by title of attachment
+- feature: Help icon with all the keyboard shortcuts
+- feature: Open doc in finder
