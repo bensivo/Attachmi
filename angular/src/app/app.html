@@ -2,6 +2,16 @@
     <nz-header>
         <div class="header-content">
             <div class="logo">{{ title() }}</div>
+            <div class="search-container">
+                <input
+                    nz-input
+                    type="text"
+                    placeholder="Search attachments..."
+                    [ngModel]="searchTerm()"
+                    (ngModelChange)="searchTerm.set($event)"
+                    class="search-input"
+                />
+            </div>
             <button nz-button nzType="primary" (click)="showModal()">
                 Add Attachment
             </button>
@@ -15,7 +25,7 @@
                     <div class="layout-left">
 
                         <nz-list nzBordered nzHeader="Attachments">
-                            @for (item of attachments; track item.id) {
+                            @for (item of filteredAttachments; track item.id) {
                                 <nz-list-item
                                     class="attachment-list-item"
                                     [class.active]="selectedAttachment()?.id === item.id"
@@ -34,31 +44,83 @@
                     <div class="layout-right">
                         @if (selectedAttachment()) {
                             <div class="attachment-details">
-                                <h2>{{ selectedAttachment()!.name }}</h2>
+                                <div class="details-header">
+                                    @if (isEditing()) {
+                                        <input
+                                            nz-input
+                                            type="text"
+                                            [(ngModel)]="selectedAttachment()!.name"
+                                            class="name-input"
+                                        />
+                                    } @else {
+                                        <h2>{{ selectedAttachment()!.name }}</h2>
+                                    }
+                                    <div class="action-buttons">
+                                        <button
+                                            nz-button
+                                            nzType="default"
+                                            (click)="toggleEdit()"
+                                        >
+                                            {{ isEditing() ? 'Done' : 'Edit' }}
+                                        </button>
+                                        <button
+                                            nz-button
+                                            nzType="default"
+                                            nzDanger
+                                            (click)="deleteAttachment(selectedAttachment()!)"
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
                                 <div class="detail-section">
                                     <label>Date:</label>
-                                    <input
-                                        nz-input
-                                        type="date"
-                                        [(ngModel)]="selectedAttachment()!.date"
-                                    />
+                                    @if (isEditing()) {
+                                        <input
+                                            nz-input
+                                            type="date"
+                                            [(ngModel)]="selectedAttachment()!.date"
+                                        />
+                                    } @else {
+                                        <p>{{ selectedAttachment()!.date }}</p>
+                                    }
                                 </div>
                                 <div class="detail-section">
                                     <label>Description:</label>
-                                    <input
-                                        nz-input
-                                        type="text"
-                                        [(ngModel)]="selectedAttachment()!.description"
-                                    />
+                                    @if (isEditing()) {
+                                        <input
+                                            nz-input
+                                            type="text"
+                                            [(ngModel)]="selectedAttachment()!.description"
+                                        />
+                                    } @else {
+                                        <p>{{ selectedAttachment()!.description || '—' }}</p>
+                                    }
                                 </div>
                                 <div class="detail-section">
                                     <label>Notes:</label>
-                                    <textarea
-                                        nz-input
-                                        rows="4"
-                                        [(ngModel)]="selectedAttachment()!.notes"
-                                    ></textarea>
+                                    @if (isEditing()) {
+                                        <textarea
+                                            nz-input
+                                            rows="4"
+                                            [(ngModel)]="selectedAttachment()!.notes"
+                                        ></textarea>
+                                    } @else {
+                                        <p class="notes-text">{{ selectedAttachment()!.notes || '—' }}</p>
+                                    }
                                 </div>
+                                @if (selectedAttachment()!.fileName) {
+                                    <div class="open-file-section">
+                                        <button
+                                            nz-button
+                                            nzType="primary"
+                                            nzBlock
+                                            (click)="openFile(selectedAttachment()!)"
+                                        >
+                                            Open File
+                                        </button>
+                                    </div>
+                                }
                             </div>
                         } @else {
                             <div class="empty-state">
@@ -73,7 +135,7 @@
 </nz-layout>
 
 <nz-modal
-    [(nzVisible)]="isModalVisible"
+    [nzVisible]="isModalVisible()"
     nzTitle="Add Attachment"
     (nzOnCancel)="handleCancel()"
     (nzOnOk)="handleSubmit()"

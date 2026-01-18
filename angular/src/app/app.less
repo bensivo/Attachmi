@@ -13,6 +13,16 @@ nz-header {
     justify-content: space-between;
     align-items: center;
     width: 100%;
+    gap: 24px;
+}
+
+.search-container {
+    flex: 1;
+    max-width: 500px;
+
+    .search-input {
+        width: 100%;
+    }
 }
 
 nz-content {
@@ -49,6 +59,32 @@ nz-content {
 }
 
 .attachment-details {
+    .details-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        gap: 12px;
+
+        .name-input {
+            flex: 1;
+            font-size: 24px;
+            font-weight: 600;
+            color: #262626;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        h2 {
+            margin: 0;
+            color: #262626;
+            font-size: 24px;
+        }
+    }
+
     h2 {
         margin-top: 0;
         color: #262626;
@@ -74,11 +110,21 @@ nz-content {
             line-height: 1.6;
         }
 
+        .notes-text {
+            white-space: pre-wrap;
+        }
+
         input,
         textarea {
             width: 100%;
             font-size: 14px;
         }
+    }
+
+    .open-file-section {
+        margin-top: 32px;
+        padding-top: 24px;
+        border-top: 1px solid #f0f0f0;
     }
 }
 

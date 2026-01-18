@@ -16,6 +16,7 @@ interface Attachment {
   date: string;
   description: string;
   notes: string;
+  fileName?: string;
 }
 
 @Component({
@@ -39,8 +40,10 @@ interface Attachment {
 export class App {
   protected readonly title = signal('attachmi');
   protected readonly selectedAttachment = signal<Attachment | null>(null);
+  protected readonly searchTerm = signal('');
+  protected readonly isModalVisible = signal(false);
+  protected readonly isEditing = signal(false);
 
-  isModalVisible = false;
   newAttachmentName = '';
   selectedFile: File | null = null;
 
@@ -68,16 +71,43 @@ export class App {
     }
   ];
 
+  get filteredAttachments(): Attachment[] {
+    const search = this.normalizeText(this.searchTerm());
+
+    if (!search) {
+      return this.attachments;
+    }
+
+    return this.attachments.filter(attachment => {
+      const name = this.normalizeText(attachment.name);
+      const description = this.normalizeText(attachment.description);
+      const notes = this.normalizeText(attachment.notes);
+
+      return name.includes(search) ||
+             description.includes(search) ||
+             notes.includes(search);
+    });
+  }
+
+  private normalizeText(text: string): string {
+    return text.toLowerCase().replace(/[^\w\s]/g, '');
+  }
+
   selectAttachment(attachment: Attachment) {
     this.selectedAttachment.set(attachment);
+    this.isEditing.set(false);
+  }
+
+  toggleEdit() {
+    this.isEditing.set(!this.isEditing());
   }
 
   showModal() {
-    this.isModalVisible = true;
+    this.isModalVisible.set(true);
   }
 
   handleCancel() {
-    this.isModalVisible = false;
+    this.isModalVisible.set(false);
     this.newAttachmentName = '';
     this.selectedFile = null;
   }
@@ -92,21 +122,85 @@ export class App {
     }
   }
 
-  handleSubmit() {
+  async handleSubmit() {
     if (!this.newAttachmentName) {
       return;
     }
 
+    let fileName: string | undefined;
+
+    // If a file was selected, save it to the filesystem
+    if (this.selectedFile) {
+      fileName = `${Date.now()}_${this.selectedFile.name}`;
+
+      // Convert file to base64
+      const reader = new FileReader();
+      const fileData = await new Promise<string>((resolve) => {
+        reader.onload = () => {
+          const base64 = (reader.result as string).split(',')[1];
+          resolve(base64);
+        };
+        reader.readAsDataURL(this.selectedFile!);
+      });
+
+      console.log('Saving file...');
+
+      // Save file via Electron IPC
+      const result = await (window as any).electronAPI.saveFile(fileName, fileData);
+      if (!result.success) {
+        console.error('Failed to save file:', result.error);
+        return;
+      }
+
+      console.log('File saved successfully:', result.path);
+    }
+
+    console.log('After file saved');
     const newAttachment: Attachment = {
       id: Math.max(...this.attachments.map(a => a.id), 0) + 1,
       name: this.newAttachmentName,
       date: new Date().toISOString().split('T')[0],
       description: '',
-      notes: ''
+      notes: '',
+      fileName: fileName
     };
 
     this.attachments.push(newAttachment);
     this.handleCancel();
+  }
+
+  async openFile(attachment: Attachment) {
+    if (!attachment.fileName) {
+      console.log('No file associated with this attachment');
+      return;
+    }
+
+    const result = await (window as any).electronAPI.openFile(attachment.fileName);
+    if (!result.success) {
+      console.error('Failed to open file:', result.error);
+    }
+  }
+
+  async deleteAttachment(attachment: Attachment) {
+    // Delete file from filesystem if it exists
+    if (attachment.fileName) {
+      const result = await (window as any).electronAPI.deleteFile(attachment.fileName);
+      if (!result.success) {
+        console.error('Failed to delete file:', result.error);
+        // Continue with array deletion even if file deletion fails
+      }
+    }
+
+    // Remove from array
+    const index = this.attachments.findIndex(a => a.id === attachment.id);
+    if (index !== -1) {
+      this.attachments.splice(index, 1);
+    }
+
+    // Clear selection if this was the selected attachment
+    if (this.selectedAttachment()?.id === attachment.id) {
+      this.selectedAttachment.set(null);
+    }
   }
 
   async onClickButton() {
