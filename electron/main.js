@@ -18,11 +18,11 @@ function createWindow() {
     });
 
     // Uncomment for production mode, loading from a built angular appp
-    // const angularDistPath = path.join(__dirname, '../angular/dist/attachmi/browser/index.html');
-    // win.loadFile(angularDistPath);
+    const angularDistPath = path.join(__dirname, '../angular/dist/attachmi/browser/index.html');
+    win.loadFile(angularDistPath);
 
     // Uncomment for dev mode, loading from the `ng serve` server
-    win.loadURL('http://localhost:4200');
+    // win.loadURL('http://localhost:4200');
 }
 // App Lifecycle
 app.whenReady().then(createWindow);
