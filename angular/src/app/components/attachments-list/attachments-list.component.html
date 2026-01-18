@@ -1,0 +1,16 @@
+<div class="layout-left">
+  <nz-list nzBordered nzHeader="Attachments">
+    @for (item of attachments(); track item.id) {
+      <nz-list-item
+        class="attachment-list-item"
+        [class.active]="selectedId() === item.id"
+        (click)="onSelect(item)"
+      >
+        <nz-list-item-meta
+          [nzTitle]="item.name"
+          [nzDescription]="item.date"
+        />
+      </nz-list-item>
+    }
+  </nz-list>
+</div>

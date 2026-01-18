@@ -1,37 +1,23 @@
 import { Component, signal, effect } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { NzDividerModule } from 'ng-zorro-antd/divider';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
-import { NzListModule } from 'ng-zorro-antd/list';
 import { NzSplitterModule } from 'ng-zorro-antd/splitter';
-import { NzInputModule } from 'ng-zorro-antd/input';
-import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzModalModule } from 'ng-zorro-antd/modal';
-import { NzUploadModule } from 'ng-zorro-antd/upload';
-
-interface Attachment {
-  id: number;
-  name: string;
-  date: string;
-  description: string;
-  notes: string;
-  fileName?: string;
-}
+import {
+  HeaderComponent,
+  AttachmentsListComponent,
+  AttachmentDetailsComponent,
+  AddAttachmentModalComponent,
+  Attachment
+} from './components';
 
 @Component({
   selector: 'app-root',
   imports: [
-    RouterOutlet,
-    FormsModule,
-    NzDividerModule,
-    NzSplitterModule,
     NzLayoutModule,
-    NzListModule,
-    NzInputModule,
-    NzButtonModule,
-    NzModalModule,
-    NzUploadModule,
+    NzSplitterModule,
+    HeaderComponent,
+    AttachmentsListComponent,
+    AttachmentDetailsComponent,
+    AddAttachmentModalComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.less'
@@ -39,14 +25,19 @@ interface Attachment {
 
 export class App {
   protected readonly title = signal('attachmi');
-  protected readonly selectedAttachment = signal<Attachment | null>(null);
-  protected readonly searchTerm = signal('');
-  protected readonly isModalVisible = signal(false);
-  protected readonly isEditing = signal(false);
-  protected readonly attachments = signal<Attachment[]>([]);
 
-  newAttachmentName = '';
-  selectedFile: File | null = null;
+  // Global state signals for specific application components
+  protected readonly attachmentSearchText = signal('');
+  protected readonly isAddAttachmentModelVisible = signal(false);
+  protected readonly isEditingAttachmentDetails = signal(false);
+  protected readonly newAttachmentName = signal('');
+  protected readonly newAttachmentFileName = signal('');
+
+  // Global application data signals
+  protected readonly attachments = signal<Attachment[]>([]);
+  protected readonly selectedAttachment = signal<Attachment | null>(null);
+
+  // False when app loads, True once initial data has been loaded in from backend
   private isInitialized = false;
 
   constructor() {
@@ -56,7 +47,7 @@ export class App {
     // Auto-save selected attachment changes
     effect(() => {
       const attachment = this.selectedAttachment();
-      if (attachment && this.isInitialized && !this.isEditing()) {
+      if (attachment && this.isInitialized && !this.isEditingAttachmentDetails()) {
         // Save after a small delay to batch rapid changes
         setTimeout(() => this.updateAttachment(attachment), 500);
       }
@@ -65,10 +56,8 @@ export class App {
 
   private async loadAttachments() {
     try {
-      console.log('Loading attachments from database...');
       const loadedAttachments = await (window as any).electronAPI.listAttachments();
       this.attachments.set(loadedAttachments || []);
-      console.log(`Loaded ${this.attachments().length} attachments from database:`, this.attachments());
       this.isInitialized = true;
     } catch (error) {
       console.error('Failed to load attachments:', error);
@@ -85,8 +74,12 @@ export class App {
     }
   }
 
+  /**
+   * Returns the list of attachments, properly filtered
+   * based on the current search text. 
+   */
   get filteredAttachments(): Attachment[] {
-    const search = this.normalizeText(this.searchTerm());
+    const search = this.normalizeText(this.attachmentSearchText());
     const currentAttachments = this.attachments();
 
     if (!search) {
@@ -110,43 +103,33 @@ export class App {
 
   selectAttachment(attachment: Attachment) {
     this.selectedAttachment.set(attachment);
-    this.isEditing.set(false);
+    this.isEditingAttachmentDetails.set(false);
   }
 
   toggleEdit() {
-    this.isEditing.set(!this.isEditing());
+    this.isEditingAttachmentDetails.set(!this.isEditingAttachmentDetails());
   }
 
   showModal() {
-    this.isModalVisible.set(true);
+    this.isAddAttachmentModelVisible.set(true);
   }
 
   handleCancel() {
-    this.isModalVisible.set(false);
-    this.newAttachmentName = '';
-    this.selectedFile = null;
+    this.isAddAttachmentModelVisible.set(false);
+    this.newAttachmentName.set('');
+    this.newAttachmentFileName.set('');
   }
 
-  handleFileSelect(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      this.selectedFile = input.files[0];
-      if (!this.newAttachmentName) {
-        this.newAttachmentName = this.selectedFile.name;
-      }
-    }
-  }
-
-  async handleSubmit() {
-    if (!this.newAttachmentName) {
+  async handleSubmit(file: File | null) {
+    if (!this.newAttachmentName()) {
       return;
     }
 
     let fileName: string | undefined;
 
     // If a file was selected, save it to the filesystem
-    if (this.selectedFile) {
-      fileName = `${Date.now()}_${this.selectedFile.name}`;
+    if (file) {
+      fileName = `${Date.now()}_${file.name}`;
 
       // Convert file to base64
       const reader = new FileReader();
@@ -155,10 +138,9 @@ export class App {
           const base64 = (reader.result as string).split(',')[1];
           resolve(base64);
         };
-        reader.readAsDataURL(this.selectedFile!);
+        reader.readAsDataURL(file);
       });
 
-      console.log('Saving file...');
 
       // Save file via Electron IPC
       const result = await (window as any).electronAPI.saveFile(fileName, fileData);
@@ -166,14 +148,11 @@ export class App {
         console.error('Failed to save file:', result.error);
         return;
       }
-
-      console.log('File saved successfully:', result.path);
     }
 
-    console.log('After file saved');
     try {
       const newAttachment = await (window as any).electronAPI.createAttachment({
-        name: this.newAttachmentName,
+        name: this.newAttachmentName(),
         date: new Date().toISOString().split('T')[0],
         description: '',
         notes: '',
@@ -225,10 +204,5 @@ export class App {
     } catch (error) {
       console.error('Failed to delete attachment:', error);
     }
-  }
-
-  async onClickButton() {
-    const res = await (window as any).electronAPI.sendMessage('Hello from Angular!');
-    console.log('Response from Electron:', res);
   }
 }

@@ -1,0 +1,18 @@
+<nz-header>
+  <div class="header-content">
+    <div class="logo">{{ title() }}</div>
+    <div class="search-container">
+      <input
+        nz-input
+        type="text"
+        placeholder="Search attachments..."
+        [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)"
+        class="search-input"
+      />
+    </div>
+    <button nz-button nzType="primary" (click)="onAddClick()">
+      Add Attachment
+    </button>
+  </div>
+</nz-header>

@@ -1,0 +1,34 @@
+<nz-modal
+  [nzVisible]="visible()"
+  nzTitle="Add Attachment"
+  (nzOnCancel)="onCancel()"
+  (nzOnOk)="onSubmit()"
+  nzOkText="Add"
+  nzCancelText="Cancel"
+>
+  <ng-container *nzModalContent>
+    <div class="modal-form">
+      <div class="form-field">
+        <label>File:</label>
+        <input
+          type="file"
+          (change)="onFileSelect($event)"
+          class="file-input"
+        />
+        @if (newAttachmentFileName()) {
+          <div class="file-name">{{ newAttachmentFileName() }}</div>
+        }
+      </div>
+      <div class="form-field">
+        <label>Name:</label>
+        <input
+          nz-input
+          type="text"
+          [ngModel]="attachmentName()"
+          (ngModelChange)="attachmentName.set($event)"
+          placeholder="Enter attachment name"
+        />
+      </div>
+    </div>
+  </ng-container>
+</nz-modal>

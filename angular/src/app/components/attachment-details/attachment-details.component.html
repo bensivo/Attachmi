@@ -1,0 +1,85 @@
+@if (attachment()) {
+  <div class="attachment-details">
+    <div class="details-header">
+      @if (isEditing()) {
+        <input
+          nz-input
+          type="text"
+          [(ngModel)]="attachment()!.name"
+          class="name-input"
+        />
+      } @else {
+        <h2>{{ attachment()!.name }}</h2>
+      }
+      <div class="action-buttons">
+        <button
+          nz-button
+          nzType="default"
+          (click)="onToggleEdit()"
+        >
+          {{ isEditing() ? 'Done' : 'Edit' }}
+        </button>
+        <button
+          nz-button
+          nzType="default"
+          nzDanger
+          (click)="onDelete()"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+    <div class="detail-section">
+      <label>Date:</label>
+      @if (isEditing()) {
+        <input
+          nz-input
+          type="date"
+          [(ngModel)]="attachment()!.date"
+        />
+      } @else {
+        <p>{{ attachment()!.date }}</p>
+      }
+    </div>
+    <div class="detail-section">
+      <label>Description:</label>
+      @if (isEditing()) {
+        <input
+          nz-input
+          type="text"
+          [(ngModel)]="attachment()!.description"
+        />
+      } @else {
+        <p>{{ attachment()!.description || '—' }}</p>
+      }
+    </div>
+    <div class="detail-section">
+      <label>Notes:</label>
+      @if (isEditing()) {
+        <textarea
+          nz-input
+          rows="4"
+          [(ngModel)]="attachment()!.notes"
+        ></textarea>
+      } @else {
+        <p class="notes-text">{{ attachment()!.notes || '—' }}</p>
+      }
+    </div>
+    @if (attachment()!.fileName) {
+      <div class="open-file-section">
+        <button
+          nz-button
+          nzType="primary"
+          nzBlock
+          (click)="onOpenFile()"
+        >
+          Open File
+        </button>
+      </div>
+    }
+  </div>
+} @else {
+  <div class="empty-state">
+    <p>Select an attachment to view details</p>
+  </div>
+}
