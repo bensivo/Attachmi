@@ -58,9 +58,20 @@ function createWindow() {
         }
     });
 
-    // Uncomment for production mode, loading from a built angular appp
-    const angularDistPath = path.join(__dirname, '../angular/dist/attachmi/browser/index.html');
-    win.loadFile(angularDistPath);
+    // Load angular app - works in both dev and packaged versions
+    let angularDistPath;
+    if (app.isPackaged) {
+        // In packaged app, angular files are in dist-angular folder within Resources
+        angularDistPath = path.join(__dirname, 'dist-angular', 'attachmi', 'browser', 'index.html');
+    } else {
+        // In development, angular files are in ../angular/dist
+        angularDistPath = path.join(__dirname, '..', 'angular', 'dist', 'attachmi', 'browser', 'index.html');
+    }
+
+    console.log('Loading Angular app from:', angularDistPath);
+    win.loadFile(angularDistPath).catch(err => {
+        console.error('Failed to load Angular app:', err);
+    });
 
     // Uncomment for dev mode, loading from the `ng serve` server
     // win.loadURL('http://localhost:4200');
