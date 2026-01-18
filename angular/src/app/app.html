@@ -1,6 +1,11 @@
 <nz-layout>
     <nz-header>
-        <div class="logo">{{ title() }}</div>
+        <div class="header-content">
+            <div class="logo">{{ title() }}</div>
+            <button nz-button nzType="primary" (click)="showModal()">
+                Add Attachment
+            </button>
+        </div>
     </nz-header>
     <nz-content>
         <div class="site-layout-content">
@@ -32,15 +37,27 @@
                                 <h2>{{ selectedAttachment()!.name }}</h2>
                                 <div class="detail-section">
                                     <label>Date:</label>
-                                    <p>{{ selectedAttachment()!.date }}</p>
+                                    <input
+                                        nz-input
+                                        type="date"
+                                        [(ngModel)]="selectedAttachment()!.date"
+                                    />
                                 </div>
                                 <div class="detail-section">
                                     <label>Description:</label>
-                                    <p>{{ selectedAttachment()!.description }}</p>
+                                    <input
+                                        nz-input
+                                        type="text"
+                                        [(ngModel)]="selectedAttachment()!.description"
+                                    />
                                 </div>
                                 <div class="detail-section">
                                     <label>Notes:</label>
-                                    <p>{{ selectedAttachment()!.notes }}</p>
+                                    <textarea
+                                        nz-input
+                                        rows="4"
+                                        [(ngModel)]="selectedAttachment()!.notes"
+                                    ></textarea>
                                 </div>
                             </div>
                         } @else {
@@ -54,3 +71,37 @@
         </div>
     </nz-content>
 </nz-layout>
+
+<nz-modal
+    [(nzVisible)]="isModalVisible"
+    nzTitle="Add Attachment"
+    (nzOnCancel)="handleCancel()"
+    (nzOnOk)="handleSubmit()"
+    nzOkText="Add"
+    nzCancelText="Cancel"
+>
+    <ng-container *nzModalContent>
+        <div class="modal-form">
+            <div class="form-field">
+                <label>File:</label>
+                <input
+                    type="file"
+                    (change)="handleFileSelect($event)"
+                    class="file-input"
+                />
+                @if (selectedFile) {
+                    <div class="file-name">{{ selectedFile.name }}</div>
+                }
+            </div>
+            <div class="form-field">
+                <label>Name:</label>
+                <input
+                    nz-input
+                    type="text"
+                    [(ngModel)]="newAttachmentName"
+                    placeholder="Enter attachment name"
+                />
+            </div>
+        </div>
+    </ng-container>
+</nz-modal>
