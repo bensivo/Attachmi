@@ -1,3 +1,56 @@
-<h1>Hello, world!</h1>
+<nz-layout>
+    <nz-header>
+        <div class="logo">{{ title() }}</div>
+    </nz-header>
+    <nz-content>
+        <div class="site-layout-content">
+            <!-- <router-outlet></router-outlet> -->
+            <nz-splitter>
+                <nz-splitter-panel nzDefaultSize="50%" nzMin="10%" nzMax="90%">
+                    <div class="layout-left">
 
-<button (click)="onClickButton()">Send Message </button>
+                        <nz-list nzBordered nzHeader="Attachments">
+                            @for (item of attachments; track item.id) {
+                                <nz-list-item
+                                    class="attachment-list-item"
+                                    [class.active]="selectedAttachment()?.id === item.id"
+                                    (click)="selectAttachment(item)"
+                                >
+                                    <nz-list-item-meta
+                                        [nzTitle]="item.name"
+                                        [nzDescription]="item.date"
+                                    />
+                                </nz-list-item>
+                            }
+                        </nz-list>
+                    </div>
+                </nz-splitter-panel>
+                <nz-splitter-panel>
+                    <div class="layout-right">
+                        @if (selectedAttachment()) {
+                            <div class="attachment-details">
+                                <h2>{{ selectedAttachment()!.name }}</h2>
+                                <div class="detail-section">
+                                    <label>Date:</label>
+                                    <p>{{ selectedAttachment()!.date }}</p>
+                                </div>
+                                <div class="detail-section">
+                                    <label>Description:</label>
+                                    <p>{{ selectedAttachment()!.description }}</p>
+                                </div>
+                                <div class="detail-section">
+                                    <label>Notes:</label>
+                                    <p>{{ selectedAttachment()!.notes }}</p>
+                                </div>
+                            </div>
+                        } @else {
+                            <div class="empty-state">
+                                <p>Select an attachment to view details</p>
+                            </div>
+                        }
+                    </div>
+                </nz-splitter-panel>
+            </nz-splitter>
+        </div>
+    </nz-content>
+</nz-layout>
