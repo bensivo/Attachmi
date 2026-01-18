@@ -211,10 +211,16 @@ export class App {
 
   @HostListener('window:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
-    // CMD+F (Mac) or Ctrl+F (Windows/Linux)
+    // CMD+F (Mac) or Ctrl+F (Windows/Linux) - Focus search
     if ((event.metaKey || event.ctrlKey) && event.key === 'f') {
       event.preventDefault();
       this.headerComponent()?.focusSearchInput();
+    }
+
+    // CMD+N (Mac) or Ctrl+N (Windows/Linux) - Open add attachment modal
+    if ((event.metaKey || event.ctrlKey) && event.key === 'n') {
+      event.preventDefault();
+      this.showModal();
     }
   }
 }

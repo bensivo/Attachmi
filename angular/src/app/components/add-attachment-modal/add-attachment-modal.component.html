@@ -1,16 +1,17 @@
 <nz-modal
   [nzVisible]="visible()"
   nzTitle="Add Attachment"
-  (nzOnCancel)="onCancel()"
+  (nzOnCancel)="onCancel($event)"
   (nzOnOk)="onSubmit()"
   nzOkText="Add"
   nzCancelText="Cancel"
 >
   <ng-container *nzModalContent>
-    <div class="modal-form">
+    <form class="modal-form" (submit)="$event.preventDefault; onSubmit()">
       <div class="form-field">
         <label>File:</label>
         <input
+          #fileInput
           type="file"
           (change)="onFileSelect($event)"
           class="file-input"
@@ -27,8 +28,9 @@
           [ngModel]="newAttachmentName()"
           (ngModelChange)="newAttachmentName.set($event)"
           placeholder="Enter attachment name"
+          (keydown.enter)="onSubmit(); $event.preventDefault()"
         />
       </div>
-    </div>
+    </form>
   </ng-container>
 </nz-modal>

@@ -6,14 +6,15 @@
         #searchInput
         nz-input
         type="text"
-        placeholder="Search attachments...(Cmd+F)"
+        placeholder="Search attachments...(⌘+F)"
         [ngModel]="searchTerm()"
         (ngModelChange)="searchTerm.set($event)"
         class="search-input"
       />
     </div>
     <button nz-button nzType="primary" (click)="onAddClick()">
-      Add Attachment
+      Add Attachment 
+      <span class="subtext">(⌘+N)</span>
     </button>
   </div>
 </nz-header>
