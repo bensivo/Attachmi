@@ -6,5 +6,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveFile: (fileName, fileData) => ipcRenderer.invoke('saveFile', fileName, fileData),
   loadFile: (fileName) => ipcRenderer.invoke('loadFile', fileName),
   openFile: (fileName) => ipcRenderer.invoke('openFile', fileName),
-  deleteFile: (fileName) => ipcRenderer.invoke('deleteFile', fileName)
+  deleteFile: (fileName) => ipcRenderer.invoke('deleteFile', fileName),
+  listAttachments: () => ipcRenderer.invoke('listAttachments'),
+  createAttachment: (attachment) => ipcRenderer.invoke('createAttachment', attachment),
+  updateAttachment: (attachment) => ipcRenderer.invoke('updateAttachment', attachment),
+  deleteAttachment: (id) => ipcRenderer.invoke('deleteAttachment', id)
 });

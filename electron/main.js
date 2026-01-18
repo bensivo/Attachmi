@@ -2,6 +2,46 @@ const { ipcMain, shell } = require('electron');
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const fs = require('fs').promises;
+const sqlite3 = require('sqlite3').verbose();
+
+// Database setup
+let db;
+
+const getDbPath = () => {
+    const dbDir = path.join(app.getPath('userData'), 'db');
+    return path.join(dbDir, 'attachments.db');
+};
+
+const initDatabase = async () => {
+    const dbDir = path.dirname(getDbPath());
+    try {
+        await fs.access(dbDir);
+    } catch {
+        await fs.mkdir(dbDir, { recursive: true });
+    }
+
+    return new Promise((resolve, reject) => {
+        db = new sqlite3.Database(getDbPath(), (err) => {
+            if (err) {
+                reject(err);
+            } else {
+                db.run(`
+                    CREATE TABLE IF NOT EXISTS attachments (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        name TEXT NOT NULL,
+                        date TEXT NOT NULL,
+                        description TEXT,
+                        notes TEXT,
+                        fileName TEXT
+                    )
+                `, (err) => {
+                    if (err) reject(err);
+                    else resolve();
+                });
+            }
+        });
+    });
+};
 
 // Error Handling
 process.on('uncaughtException', (error) => {
@@ -26,8 +66,12 @@ function createWindow() {
     // win.loadURL('http://localhost:4200');
 }
 // App Lifecycle
-app.whenReady().then(createWindow);
+app.whenReady().then(async () => {
+    await initDatabase();
+    createWindow();
+});
 app.on('window-all-closed', () => {
+    if (db) db.close();
     if (process.platform !== 'darwin') app.quit();
 });
 app.on('activate', () => {
@@ -123,4 +167,72 @@ ipcMain.handle('deleteFile', async (event, fileName) => {
         console.error('Error deleting file:', error);
         return { success: false, error: error.message };
     }
+});
+
+// Database IPC Handlers
+ipcMain.handle('listAttachments', async (event) => {
+    console.log('ipc:listAttachments()');
+    return new Promise((resolve, reject) => {
+        db.all('SELECT * FROM attachments ORDER BY id DESC', (err, rows) => {
+            if (err) {
+                console.error('Error listing attachments:', err);
+                reject(err);
+            } else {
+                console.log('Loaded attachments from DB:', rows);
+                resolve(rows || []);
+            }
+        });
+    });
+});
+
+ipcMain.handle('createAttachment', async (event, attachment) => {
+    console.log('ipc:createAttachment()');
+    return new Promise((resolve, reject) => {
+        const { name, date, description, notes, fileName } = attachment;
+        db.run(
+            'INSERT INTO attachments (name, date, description, notes, fileName) VALUES (?, ?, ?, ?, ?)',
+            [name, date, description || '', notes || '', fileName || null],
+            function (err) {
+                if (err) {
+                    console.error('Error creating attachment:', err);
+                    reject(err);
+                } else {
+                    resolve({ id: this.lastID, name, date, description, notes, fileName });
+                }
+            }
+        );
+    });
+});
+
+ipcMain.handle('updateAttachment', async (event, attachment) => {
+    console.log('ipc:updateAttachment()');
+    return new Promise((resolve, reject) => {
+        const { id, name, date, description, notes } = attachment;
+        db.run(
+            'UPDATE attachments SET name = ?, date = ?, description = ?, notes = ? WHERE id = ?',
+            [name, date, description || '', notes || '', id],
+            function (err) {
+                if (err) {
+                    console.error('Error updating attachment:', err);
+                    reject(err);
+                } else {
+                    resolve({ success: true });
+                }
+            }
+        );
+    });
+});
+
+ipcMain.handle('deleteAttachment', async (event, id) => {
+    console.log('ipc:deleteAttachment()');
+    return new Promise((resolve, reject) => {
+        db.run('DELETE FROM attachments WHERE id = ?', [id], function (err) {
+            if (err) {
+                console.error('Error deleting attachment:', err);
+                reject(err);
+            } else {
+                resolve({ success: true });
+            }
+        });
+    });
 });

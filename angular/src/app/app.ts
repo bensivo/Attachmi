@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, effect } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NzDividerModule } from 'ng-zorro-antd/divider';
@@ -43,42 +43,57 @@ export class App {
   protected readonly searchTerm = signal('');
   protected readonly isModalVisible = signal(false);
   protected readonly isEditing = signal(false);
+  protected readonly attachments = signal<Attachment[]>([]);
 
   newAttachmentName = '';
   selectedFile: File | null = null;
+  private isInitialized = false;
 
-  attachments: Attachment[] = [
-    {
-      id: 1,
-      name: 'Document.pdf',
-      date: '2026-01-15',
-      description: 'Project proposal document',
-      notes: 'Needs review by end of week'
-    },
-    {
-      id: 2,
-      name: 'Image.png',
-      date: '2026-01-12',
-      description: 'Screenshot of dashboard mockup',
-      notes: 'Final design approved by client'
-    },
-    {
-      id: 3,
-      name: 'Presentation.pptx',
-      date: '2026-01-10',
-      description: 'Q1 quarterly review presentation',
-      notes: 'Used in Monday meeting'
+  constructor() {
+    // Load attachments on init
+    this.loadAttachments();
+
+    // Auto-save selected attachment changes
+    effect(() => {
+      const attachment = this.selectedAttachment();
+      if (attachment && this.isInitialized && !this.isEditing()) {
+        // Save after a small delay to batch rapid changes
+        setTimeout(() => this.updateAttachment(attachment), 500);
+      }
+    });
+  }
+
+  private async loadAttachments() {
+    try {
+      console.log('Loading attachments from database...');
+      const loadedAttachments = await (window as any).electronAPI.listAttachments();
+      this.attachments.set(loadedAttachments || []);
+      console.log(`Loaded ${this.attachments().length} attachments from database:`, this.attachments());
+      this.isInitialized = true;
+    } catch (error) {
+      console.error('Failed to load attachments:', error);
+      this.attachments.set([]);
+      this.isInitialized = true;
     }
-  ];
+  }
+
+  private async updateAttachment(attachment: Attachment) {
+    try {
+      await (window as any).electronAPI.updateAttachment(attachment);
+    } catch (error) {
+      console.error('Failed to update attachment:', error);
+    }
+  }
 
   get filteredAttachments(): Attachment[] {
     const search = this.normalizeText(this.searchTerm());
+    const currentAttachments = this.attachments();
 
     if (!search) {
-      return this.attachments;
+      return currentAttachments;
     }
 
-    return this.attachments.filter(attachment => {
+    return currentAttachments.filter(attachment => {
       const name = this.normalizeText(attachment.name);
       const description = this.normalizeText(attachment.description);
       const notes = this.normalizeText(attachment.notes);
@@ -156,17 +171,20 @@ export class App {
     }
 
     console.log('After file saved');
-    const newAttachment: Attachment = {
-      id: Math.max(...this.attachments.map(a => a.id), 0) + 1,
-      name: this.newAttachmentName,
-      date: new Date().toISOString().split('T')[0],
-      description: '',
-      notes: '',
-      fileName: fileName
-    };
+    try {
+      const newAttachment = await (window as any).electronAPI.createAttachment({
+        name: this.newAttachmentName,
+        date: new Date().toISOString().split('T')[0],
+        description: '',
+        notes: '',
+        fileName: fileName
+      });
 
-    this.attachments.push(newAttachment);
-    this.handleCancel();
+      this.attachments.update(attachments => [...attachments, newAttachment]);
+      this.handleCancel();
+    } catch (error) {
+      console.error('Failed to create attachment:', error);
+    }
   }
 
   async openFile(attachment: Attachment) {
@@ -182,24 +200,30 @@ export class App {
   }
 
   async deleteAttachment(attachment: Attachment) {
-    // Delete file from filesystem if it exists
-    if (attachment.fileName) {
-      const result = await (window as any).electronAPI.deleteFile(attachment.fileName);
-      if (!result.success) {
-        console.error('Failed to delete file:', result.error);
-        // Continue with array deletion even if file deletion fails
+    try {
+      // Delete file from filesystem if it exists
+      if (attachment.fileName) {
+        const result = await (window as any).electronAPI.deleteFile(attachment.fileName);
+        if (!result.success) {
+          console.error('Failed to delete file:', result.error);
+          // Continue with database deletion even if file deletion fails
+        }
       }
-    }
 
-    // Remove from array
-    const index = this.attachments.findIndex(a => a.id === attachment.id);
-    if (index !== -1) {
-      this.attachments.splice(index, 1);
-    }
+      // Delete from database
+      await (window as any).electronAPI.deleteAttachment(attachment.id);
 
-    // Clear selection if this was the selected attachment
-    if (this.selectedAttachment()?.id === attachment.id) {
-      this.selectedAttachment.set(null);
+      // Remove from array
+      this.attachments.update(attachments =>
+        attachments.filter(a => a.id !== attachment.id)
+      );
+
+      // Clear selection if this was the selected attachment
+      if (this.selectedAttachment()?.id === attachment.id) {
+        this.selectedAttachment.set(null);
+      }
+    } catch (error) {
+      console.error('Failed to delete attachment:', error);
     }
   }
 

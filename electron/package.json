@@ -18,6 +18,9 @@
     "start": "electron .",
     "dev": "nodemon --watch . --exec 'electron .'"
   },
+  "dependencies": {
+    "sqlite3": "^5.1.7"
+  },
   "devDependencies": {
     "electron": "^40.0.0",
     "nodemon": "^3.1.11"
