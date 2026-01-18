@@ -1,4 +1,4 @@
-import { Component, input, output, model } from '@angular/core';
+import { Component, output, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzInputModule } from 'ng-zorro-antd/input';

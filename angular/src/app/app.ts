@@ -1,4 +1,4 @@
-import { Component, signal, effect } from '@angular/core';
+import { Component, signal, effect, viewChild, HostListener } from '@angular/core';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzSplitterModule } from 'ng-zorro-antd/splitter';
 import {
@@ -39,6 +39,9 @@ export class App {
 
   // False when app loads, True once initial data has been loaded in from backend
   private isInitialized = false;
+
+  // Reference to header component for keyboard shortcuts
+  private headerComponent = viewChild(HeaderComponent);
 
   constructor() {
     // Load attachments on init
@@ -203,6 +206,15 @@ export class App {
       }
     } catch (error) {
       console.error('Failed to delete attachment:', error);
+    }
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent) {
+    // CMD+F (Mac) or Ctrl+F (Windows/Linux)
+    if ((event.metaKey || event.ctrlKey) && event.key === 'f') {
+      event.preventDefault();
+      this.headerComponent()?.focusSearchInput();
     }
   }
 }

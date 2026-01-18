@@ -3,9 +3,10 @@
     <div class="logo">{{ title() }}</div>
     <div class="search-container">
       <input
+        #searchInput
         nz-input
         type="text"
-        placeholder="Search attachments..."
+        placeholder="Search attachments...(Cmd+F)"
         [ngModel]="searchTerm()"
         (ngModelChange)="searchTerm.set($event)"
         class="search-input"

@@ -1,7 +1,7 @@
 <nz-layout>
   <app-header
     [title]="title()"
-    [(searchTerm)]="searchTerm"
+    [(searchTerm)]="attachmentSearchText"
     (addAttachment)="showModal()"
   />
   <nz-content>
@@ -18,7 +18,7 @@
           <div class="layout-right">
             <app-attachment-details
               [attachment]="selectedAttachment()"
-              [(isEditing)]="isEditing"
+              [(isEditing)]="isEditingAttachmentDetails"
               (toggleEdit)="toggleEdit()"
               (deleteAttachment)="deleteAttachment(selectedAttachment()!)"
               (openFile)="openFile(selectedAttachment()!)"
@@ -31,9 +31,9 @@
 </nz-layout>
 
 <app-add-attachment-modal
-  [(visible)]="isModalVisible"
-  [(attachmentName)]="newAttachmentName"
-  [(selectedFileName)]="newAttachmentFileName"
+  [(visible)]="isAddAttachmentModelVisible"
+  [(newAttachmentName)]="newAttachmentName"
+  [(newAttachmentFileName)]="newAttachmentFileName"
   (cancel)="handleCancel()"
   (submit)="handleSubmit($event)"
 />

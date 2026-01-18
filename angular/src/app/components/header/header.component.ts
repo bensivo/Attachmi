@@ -1,4 +1,4 @@
-import { Component, input, output, model } from '@angular/core';
+import { Component, input, output, model, viewChild, ElementRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzInputModule } from 'ng-zorro-antd/input';
@@ -21,7 +21,13 @@ export class HeaderComponent {
   searchTerm = model.required<string>();
   addAttachment = output<void>();
 
+  searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
+
   onAddClick() {
     this.addAttachment.emit();
+  }
+
+  focusSearchInput() {
+    this.searchInput()?.nativeElement.focus();
   }
 }
