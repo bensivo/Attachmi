@@ -1,12 +1,20 @@
 - feature: add ability to drag files into app
 - feature: keyboard shortcuts for basic actions (search, add file, edit, delete)
+  - [x] search
+  - [x] add
+  - [x] prev/next
+  - [] edit
+  - [] save
+  - [] delete
+- bug: After adding attachment, it is not selected
+- feature: Description, screenshots, usage in Github. 
+- task: Test on another macbook
 - feature: Create logo
+- feature: Help icon with all the keyboard shortcuts
 - feature: Choose a color pallete
 - feature: Light/Dark mode
 - feature: Better search, filtering on the left sidebar
 - bug: App name is all lowercase
-- techdebt: No manual test cases
-- bug: After adding attachment, it is not selected
 - bug: order of files in list is reversed from expected
 - feature: collections of files
 - feature: add link
