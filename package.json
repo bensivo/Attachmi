@@ -1,0 +1,15 @@
+{
+  "name": "attachmi",
+  "version": "1.0.0",
+  "description": "Attachmi is a desktop app for structured document storage, designed for the modern knowledge worker.",
+  "scripts": {
+    "build": "cd angular && npm run build",
+    "start": "cd angular && npm run build && cd ../electron && npm run start"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bensivo/Attachmi.git"
+  },
+  "license": "ISC",
+  "author": ""
+}
