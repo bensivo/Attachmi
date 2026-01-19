@@ -55,7 +55,12 @@ function createWindow() {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
             enableRemoteModule: false,
-        }
+        },
+
+        // remove the default titlebar
+        // and some code to expose window controls in Windows/Linux
+        titleBarStyle: 'hidden',
+        ...(process.platform !== 'darwin' ? { titleBarOverlay: true } : {}),
     });
 
     // Load angular app - works in both dev and packaged versions
