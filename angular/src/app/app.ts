@@ -172,6 +172,7 @@ export class App {
       });
 
       this.attachments.update(attachments => [...attachments, newAttachment]);
+      this.selectAttachment(newAttachment);
       this.handleCancel();
     } catch (error) {
       console.error('Failed to create attachment:', error);
