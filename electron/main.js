@@ -216,7 +216,6 @@ ipcMain.handle('createAttachment', async (event, attachment) => {
 });
 
 ipcMain.handle('updateAttachment', async (event, attachment) => {
-    console.log('ipc:updateAttachment()');
     return new Promise((resolve, reject) => {
         const { id, name, date, description, notes } = attachment;
         db.run(

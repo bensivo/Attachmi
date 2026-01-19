@@ -17,7 +17,7 @@
           nzType="default"
           (click)="onToggleEdit()"
         >
-          {{ isEditing() ? 'Done' : 'Edit' }}
+          {{ isEditing() ? 'Save (⌘+S)' : 'Edit (⌘+E)' }}
         </button>
         <button
           nz-button
@@ -73,7 +73,7 @@
           nzBlock
           (click)="onOpenFile()"
         >
-          Open File
+          Open File (⌘+O)
         </button>
       </div>
     }

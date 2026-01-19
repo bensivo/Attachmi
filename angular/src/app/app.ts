@@ -234,6 +234,31 @@ export class App {
       event.preventDefault();
       this.selectPreviousAttachment();
     }
+
+    // CMD+O (Mac) or Ctrl+O (Windows/Linux) - Open file if detail page is active
+    if ((event.metaKey || event.ctrlKey) && event.key === 'o') {
+      event.preventDefault();
+      const attachment = this.selectedAttachment();
+      if (attachment && attachment.fileName) {
+        this.openFile(attachment);
+      }
+    }
+
+    // CMD+E (Mac) or Ctrl+E (Windows/Linux) - Toggle edit mode
+    if ((event.metaKey || event.ctrlKey) && event.key === 'e') {
+      event.preventDefault();
+      if (this.selectedAttachment()) {
+        this.toggleEdit();
+      }
+    }
+
+    // CMD+S (Mac) or Ctrl+S (Windows/Linux) - Save (exit edit mode)
+    if ((event.metaKey || event.ctrlKey) && event.key === 's') {
+      event.preventDefault();
+      if (this.selectedAttachment() && this.isEditingAttachmentDetails()) {
+        this.toggleEdit();
+      }
+    }
   }
 
   selectNextAttachment() {
