@@ -9,18 +9,35 @@ nz-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
   width: 100%;
   gap: 24px;
 }
 
-.search-container {
+.placeholder {
   flex: 1;
+}
+
+.search-container {
+  flex: 9;
+  min-width: 300px;
   max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+  -webkit-app-region: no-drag; // Disable dragging here, so the input can be clicked on
 
   .search-input {
     width: 100%;
   }
 }
+
+.btn-container {
+  flex: 1;
+  display:flex;
+  justify-content: end;
+  -webkit-app-region: no-drag;
+}
+
 
 
 .subtext {

@@ -1,4 +1,4 @@
-import { Component, output, model, viewChild, ElementRef, effect } from '@angular/core';
+import { Component, output, model, viewChild, ElementRef, effect, input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzInputModule } from 'ng-zorro-antd/input';
@@ -20,6 +20,9 @@ export class AddAttachmentModalComponent {
   newAttachmentName = model.required<string>();
   newAttachmentFileName = model.required<string>();
 
+  // Optional file input for drag-and-drop scenarios
+  droppedFile = input<File | null>(null);
+
   cancel = output<void>();
   submit = output<File | null>();
 
@@ -28,13 +31,16 @@ export class AddAttachmentModalComponent {
   fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
   constructor() {
-    // Auto-click file input when modal opens
+    // Auto-click file input when modal opens, but only if no file was dropped
     effect(() => {
-      if (this.visible()) {
+      if (this.visible() && !this.droppedFile()) {
         // Small delay to ensure modal is fully rendered
         setTimeout(() => {
           this.fileInput()?.nativeElement.click();
         }, 25);
+      } else if (this.visible() && this.droppedFile()) {
+        // If a file was dropped, use it directly
+        this.file = this.droppedFile();
       }
     });
   }

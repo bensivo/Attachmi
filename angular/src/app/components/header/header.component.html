@@ -1,6 +1,6 @@
 <nz-header>
   <div class="header-content">
-    <!-- <div class="logo">{{ title() }}</div> -->
+    <div class="placeholder"></div>
     <div class="search-container">
       <input
         #searchInput
@@ -12,9 +12,11 @@
         class="search-input"
       />
     </div>
-    <button nz-button nzType="primary" (click)="onAddClick()">
-      Add Attachment 
-      <span class="subtext">(⌘+N)</span>
-    </button>
+    <div class="btn-container">
+      <button class="add-attachment-button" nz-button nzType="primary" (click)="onAddClick()">
+        Add Attachment 
+        <span class="subtext">(⌘+N)</span>
+      </button>
+    </div>
   </div>
 </nz-header>

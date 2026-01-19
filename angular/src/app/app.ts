@@ -1,4 +1,5 @@
 import { Component, signal, effect, viewChild, HostListener } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzSplitterModule } from 'ng-zorro-antd/splitter';
 import {
@@ -12,6 +13,7 @@ import {
 @Component({
   selector: 'app-root',
   imports: [
+    CommonModule,
     NzLayoutModule,
     NzSplitterModule,
     HeaderComponent,
@@ -32,6 +34,8 @@ export class App {
   protected readonly isEditingAttachmentDetails = signal(false);
   protected readonly newAttachmentName = signal('');
   protected readonly newAttachmentFileName = signal('');
+  protected readonly isDragging = signal(false);
+  protected readonly droppedFile = signal<File | null>(null);
 
   // Global application data signals
   protected readonly attachments = signal<Attachment[]>([]);
@@ -130,6 +134,74 @@ export class App {
     this.isAddAttachmentModelVisible.set(false);
     this.newAttachmentName.set('');
     this.newAttachmentFileName.set('');
+    this.droppedFile.set(null);
+  }
+
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging.set(true);
+  }
+
+  onDragLeave(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Only set isDragging to false if we're leaving the nz-layout element
+    // This prevents flickering when dragging over child elements
+    if (event.target === event.currentTarget) {
+      this.isDragging.set(false);
+    }
+  }
+
+  async onDrop(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging.set(false);
+
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+
+      // Automatically create attachment with the original filename
+      await this.createAttachmentFromFile(file, file.name);
+    }
+  }
+
+  private async createAttachmentFromFile(file: File, attachmentName: string) {
+    const fileName = `${Date.now()}_${file.name}`;
+
+    // Convert file to base64
+    const reader = new FileReader();
+    const fileData = await new Promise<string>((resolve) => {
+      reader.onload = () => {
+        const base64 = (reader.result as string).split(',')[1];
+        resolve(base64);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Save file via Electron IPC
+    const result = await (window as any).electronAPI.saveFile(fileName, fileData);
+    if (!result.success) {
+      console.error('Failed to save file:', result.error);
+      return;
+    }
+
+    try {
+      const newAttachment = await (window as any).electronAPI.createAttachment({
+        name: attachmentName,
+        date: new Date().toISOString().split('T')[0],
+        description: '',
+        notes: '',
+        fileName: fileName
+      });
+
+      this.attachments.update(attachments => [...attachments, newAttachment]);
+      this.selectAttachment(newAttachment);
+    } catch (error) {
+      console.error('Failed to create attachment:', error);
+    }
   }
 
   async handleSubmit(file: File | null) {

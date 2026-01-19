@@ -1,4 +1,9 @@
-<nz-layout>
+<nz-layout
+  (drop)="onDrop($event)"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave($event)"
+  [class.drag-over]="isDragging()"
+>
   <app-header
     [title]="title()"
     [(searchTerm)]="attachmentSearchText"
@@ -28,12 +33,20 @@
       </nz-splitter>
     </div>
   </nz-content>
+
+  <div class="drop-overlay" *ngIf="isDragging()">
+    <div class="drop-message">
+      <span class="drop-icon">📎</span>
+      <span>Drop file to add attachment</span>
+    </div>
+  </div>
 </nz-layout>
 
 <app-add-attachment-modal
   [(visible)]="isAddAttachmentModelVisible"
   [(newAttachmentName)]="newAttachmentName"
   [(newAttachmentFileName)]="newAttachmentFileName"
+  [droppedFile]="droppedFile()"
   (cancel)="handleCancel()"
   (submit)="handleSubmit($event)"
 />

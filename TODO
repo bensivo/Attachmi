@@ -1,5 +1,3 @@
-- feature: add ability to drag files into app
-- feature: Get rid of ugle old-looking app header. Make it match the rest of the app, at least. 
 - feature: Description, screenshots, usage in Github. 
 - feature: bulk add files
 - task: Test on another macbook
