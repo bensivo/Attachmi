@@ -1,4 +1,4 @@
-import { Component, input, output, model } from '@angular/core';
+import { Component, input, output, model, viewChild, ElementRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -22,6 +22,9 @@ export class AttachmentDetailsComponent {
   deleteAttachment = output<void>();
   openFile = output<void>();
 
+  // Reference to the title input field
+  private titleInput = viewChild<ElementRef>('titleInput');
+
   onToggleEdit() {
     this.toggleEdit.emit();
   }
@@ -32,5 +35,11 @@ export class AttachmentDetailsComponent {
 
   onOpenFile() {
     this.openFile.emit();
+  }
+
+  focusTitleInput() {
+    setTimeout(() => {
+      this.titleInput()?.nativeElement.focus();
+    }, 0);
   }
 }

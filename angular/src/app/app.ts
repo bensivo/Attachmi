@@ -43,6 +43,9 @@ export class App {
   // Reference to header component for keyboard shortcuts
   private headerComponent = viewChild(HeaderComponent);
 
+  // Reference to attachment details component for focusing inputs
+  private attachmentDetailsComponent = viewChild(AttachmentDetailsComponent);
+
   constructor() {
     // Load attachments on init
     this.loadAttachments();
@@ -110,7 +113,13 @@ export class App {
   }
 
   toggleEdit() {
-    this.isEditingAttachmentDetails.set(!this.isEditingAttachmentDetails());
+    const wasEditing = this.isEditingAttachmentDetails();
+    this.isEditingAttachmentDetails.set(!wasEditing);
+
+    // Focus the title input when entering edit mode
+    if (!wasEditing) {
+      this.attachmentDetailsComponent()?.focusTitleInput();
+    }
   }
 
   showModal() {

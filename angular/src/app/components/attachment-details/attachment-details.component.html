@@ -3,10 +3,12 @@
     <div class="details-header">
       @if (isEditing()) {
         <input
+          #titleInput
           nz-input
           type="text"
           [(ngModel)]="attachment()!.name"
           class="name-input"
+          tabindex="1"
         />
       } @else {
         <h2>{{ attachment()!.name }}</h2>
@@ -16,6 +18,7 @@
           nz-button
           nzType="default"
           (click)="onToggleEdit()"
+          tabindex="-1"
         >
           {{ isEditing() ? 'Save (⌘+S)' : 'Edit (⌘+E)' }}
         </button>
@@ -24,6 +27,7 @@
           nzType="default"
           nzDanger
           (click)="onDelete()"
+          tabindex="-1"
         >
           Delete
         </button>
@@ -36,6 +40,7 @@
           nz-input
           type="date"
           [(ngModel)]="attachment()!.date"
+          tabindex="2"
         />
       } @else {
         <p>{{ attachment()!.date }}</p>
@@ -48,6 +53,7 @@
           nz-input
           type="text"
           [(ngModel)]="attachment()!.description"
+          tabindex="3"
         />
       } @else {
         <p>{{ attachment()!.description || '—' }}</p>
@@ -60,6 +66,7 @@
           nz-input
           rows="4"
           [(ngModel)]="attachment()!.notes"
+          tabindex="4"
         ></textarea>
       } @else {
         <p class="notes-text">{{ attachment()!.notes || '—' }}</p>
