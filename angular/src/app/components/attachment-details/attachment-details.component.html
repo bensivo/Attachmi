@@ -72,6 +72,45 @@
         <p class="notes-text">{{ attachment()!.notes || '—' }}</p>
       }
     </div>
+    <div class="detail-section">
+      <label>Collections:</label>
+      <div class="collections-section">
+        @for (collection of attachmentCollections(); track collection.id) {
+          <nz-tag
+            [nzColor]="'blue'"
+            [nzMode]="'closeable'"
+            (nzOnClose)="onRemoveFromCollection(collection.id)"
+          >
+            {{ collection.name }}
+          </nz-tag>
+        }
+        <div class="add-collection-container">
+          <nz-select
+            nzShowSearch
+            nzAllowClear
+            [(ngModel)]="selectedCollectionId"
+            nzPlaceHolder="Collection"
+            style="width: 200px;"
+          >
+            @for (collection of availableCollections(); track collection.id) {
+              <nz-option
+                [nzValue]="collection.id"
+                [nzLabel]="collection.name"
+              ></nz-option>
+            }
+          </nz-select>
+          <button
+            nz-button
+            nzType="primary"
+            nzSize="small"
+            [disabled]="!selectedCollectionId()"
+            (click)="onAddToCollection()"
+          >
+            Add
+          </button>
+        </div>
+      </div>
+    </div>
     @if (attachment()!.fileName) {
       <div class="open-file-section">
         <button

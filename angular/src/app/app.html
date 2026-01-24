@@ -9,29 +9,122 @@
     [(searchTerm)]="attachmentSearchText"
     (addAttachment)="showModal()"
   />
+  <div class="tab-navigation">
+    <button
+      class="tab-button"
+      [class.active]="activeTab() === 'files'"
+      (click)="switchTab('files')"
+    >
+      All Files
+    </button>
+    <button
+      class="tab-button"
+      [class.active]="activeTab() === 'collections'"
+      (click)="switchTab('collections')"
+    >
+      Collections
+    </button>
+  </div>
   <nz-content>
     <div class="site-layout-content">
-      <nz-splitter>
-        <nz-splitter-panel nzDefaultSize="50%" nzMin="10%" nzMax="90%">
-          <app-attachments-list
-            [attachments]="filteredAttachments"
-            [selectedId]="selectedAttachment()?.id ?? null"
-            (selectAttachment)="selectAttachment($event)"
-          />
-        </nz-splitter-panel>
-        <nz-splitter-panel>
-          <div class="layout-right">
-            <app-attachment-details
-              [attachment]="selectedAttachment()"
-              [(isEditing)]="isEditingAttachmentDetails"
-              (toggleEdit)="toggleEdit()"
-              (deleteAttachment)="deleteAttachment(selectedAttachment()!)"
-              (openFile)="openFile(selectedAttachment()!)"
-              (downloadFile)="downloadFile(selectedAttachment()!)"
+      @if (activeTab() === 'files') {
+        <nz-splitter>
+          <nz-splitter-panel nzDefaultSize="50%" nzMin="10%" nzMax="90%">
+            <app-attachments-list
+              [attachments]="filteredAttachments"
+              [selectedId]="selectedAttachment()?.id ?? null"
+              (selectAttachment)="selectAttachment($event)"
             />
+          </nz-splitter-panel>
+          <nz-splitter-panel>
+            <div class="layout-right">
+              <app-attachment-details
+                [attachment]="selectedAttachment()"
+                [(isEditing)]="isEditingAttachmentDetails"
+                [attachmentCollections]="attachmentCollections()"
+                [availableCollections]="availableCollections"
+                (toggleEdit)="toggleEdit()"
+                (deleteAttachment)="deleteAttachment(selectedAttachment()!)"
+                (openFile)="openFile(selectedAttachment()!)"
+                (downloadFile)="downloadFile(selectedAttachment()!)"
+                (addToCollection)="addToCollection($event)"
+                (removeFromCollection)="removeFromCollection($event)"
+              />
+            </div>
+          </nz-splitter-panel>
+        </nz-splitter>
+      }
+      @if (activeTab() === 'collections') {
+        @if (selectedCollection()) {
+          <!-- Collection Detail View -->
+          <div class="collection-detail-container">
+            <div class="collection-header">
+              <button class="back-button" (click)="backToCollections()">
+                ← Back
+              </button>
+              <h2 class="collection-name">{{ selectedCollection()!.name }}</h2>
+              <div class="collection-actions">
+                <!-- <button nz-button (click)="addFilesToCollection()">
+                  Add Files
+                </button> -->
+                <button nz-button nzDanger (click)="deleteCollection()" class="ant-btn ant-btn-default ant-btn-dangerous">
+                  Delete Collection
+                </button>
+              </div>
+            </div>
+            <div class="collection-content">
+              <nz-splitter>
+                <nz-splitter-panel nzDefaultSize="50%" nzMin="10%" nzMax="90%">
+                  <app-attachments-list
+                    [attachments]="filteredCollectionAttachments"
+                    [selectedId]="selectedAttachment()?.id ?? null"
+                    (selectAttachment)="selectAttachment($event)"
+                  />
+                </nz-splitter-panel>
+                <nz-splitter-panel>
+                  <div class="layout-right">
+                    <app-attachment-details
+                      [attachment]="selectedAttachment()"
+                      [(isEditing)]="isEditingAttachmentDetails"
+                      [attachmentCollections]="attachmentCollections()"
+                      [availableCollections]="availableCollections"
+                      (toggleEdit)="toggleEdit()"
+                      (deleteAttachment)="deleteAttachment(selectedAttachment()!)"
+                      (openFile)="openFile(selectedAttachment()!)"
+                      (downloadFile)="downloadFile(selectedAttachment()!)"
+                      (addToCollection)="addToCollection($event)"
+                      (removeFromCollection)="removeFromCollection($event)"
+                    />
+                  </div>
+                </nz-splitter-panel>
+              </nz-splitter>
+            </div>
           </div>
-        </nz-splitter-panel>
-      </nz-splitter>
+        } @else {
+          <!-- Collections Grid View -->
+          <div class="collections-container">
+            <div class="collections-grid">
+              <!-- New Collection Button Card -->
+              <button class="collection-card new-collection-card" (click)="createNewCollection()">
+                <div class="card-content">
+                  <div class="card-title">New Collection</div>
+                  <div class="plus-icon">+</div>
+                </div>
+              </button>
+
+              <!-- Collection Cards -->
+              @for (collection of collections(); track collection.id) {
+                <div class="collection-card" (click)="selectCollection(collection.id)">
+                  <div class="card-content">
+                    <div class="card-title">{{ collection.name }}</div>
+                    <div class="card-count">{{ collection.count }} items</div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      }
     </div>
   </nz-content>
 
@@ -51,3 +144,23 @@
   (cancel)="handleCancel()"
   (submit)="handleSubmit($event)"
 />
+
+<nz-modal
+  [(nzVisible)]="isAddCollectionModalVisible"
+  nzTitle="Create New Collection"
+  (nzOnCancel)="handleCollectionCancel()"
+  (nzOnOk)="handleCollectionSubmit()"
+>
+  <ng-container *nzModalContent>
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; margin-bottom: 8px;">Collection Name</label>
+      <input
+        nz-input
+        type="text"
+        placeholder="Enter collection name"
+        [(ngModel)]="newCollectionName"
+        (keyup.enter)="handleCollectionSubmit()"
+      />
+    </div>
+  </ng-container>
+</nz-modal>
