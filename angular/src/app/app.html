@@ -41,10 +41,14 @@
               <app-attachment-details
                 [attachment]="selectedAttachment()"
                 [(isEditing)]="isEditingAttachmentDetails"
+                [attachmentCollections]="attachmentCollections()"
+                [availableCollections]="availableCollections"
                 (toggleEdit)="toggleEdit()"
                 (deleteAttachment)="deleteAttachment(selectedAttachment()!)"
                 (openFile)="openFile(selectedAttachment()!)"
                 (downloadFile)="downloadFile(selectedAttachment()!)"
+                (addToCollection)="addToCollection($event)"
+                (removeFromCollection)="removeFromCollection($event)"
               />
             </div>
           </nz-splitter-panel>
@@ -60,10 +64,10 @@
               </button>
               <h2 class="collection-name">{{ selectedCollection()!.name }}</h2>
               <div class="collection-actions">
-                <button nz-button (click)="addFilesToCollection()">
+                <!-- <button nz-button (click)="addFilesToCollection()">
                   Add Files
-                </button>
-                <button nz-button nzDanger (click)="deleteCollection()">
+                </button> -->
+                <button nz-button nzDanger (click)="deleteCollection()" class="ant-btn ant-btn-default ant-btn-dangerous">
                   Delete Collection
                 </button>
               </div>
@@ -72,7 +76,7 @@
               <nz-splitter>
                 <nz-splitter-panel nzDefaultSize="50%" nzMin="10%" nzMax="90%">
                   <app-attachments-list
-                    [attachments]="filteredAttachments"
+                    [attachments]="filteredCollectionAttachments"
                     [selectedId]="selectedAttachment()?.id ?? null"
                     (selectAttachment)="selectAttachment($event)"
                   />
@@ -82,10 +86,14 @@
                     <app-attachment-details
                       [attachment]="selectedAttachment()"
                       [(isEditing)]="isEditingAttachmentDetails"
+                      [attachmentCollections]="attachmentCollections()"
+                      [availableCollections]="availableCollections"
                       (toggleEdit)="toggleEdit()"
                       (deleteAttachment)="deleteAttachment(selectedAttachment()!)"
                       (openFile)="openFile(selectedAttachment()!)"
                       (downloadFile)="downloadFile(selectedAttachment()!)"
+                      (addToCollection)="addToCollection($event)"
+                      (removeFromCollection)="removeFromCollection($event)"
                     />
                   </div>
                 </nz-splitter-panel>
@@ -136,3 +144,23 @@
   (cancel)="handleCancel()"
   (submit)="handleSubmit($event)"
 />
+
+<nz-modal
+  [(nzVisible)]="isAddCollectionModalVisible"
+  nzTitle="Create New Collection"
+  (nzOnCancel)="handleCollectionCancel()"
+  (nzOnOk)="handleCollectionSubmit()"
+>
+  <ng-container *nzModalContent>
+    <div style="margin-bottom: 16px;">
+      <label style="display: block; margin-bottom: 8px;">Collection Name</label>
+      <input
+        nz-input
+        type="text"
+        placeholder="Enter collection name"
+        [(ngModel)]="newCollectionName"
+        (keyup.enter)="handleCollectionSubmit()"
+      />
+    </div>
+  </ng-container>
+</nz-modal>

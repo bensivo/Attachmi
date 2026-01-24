@@ -1,7 +1,11 @@
 import { Component, signal, effect, viewChild, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzSplitterModule } from 'ng-zorro-antd/splitter';
+import { NzModalModule } from 'ng-zorro-antd/modal';
+import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzButtonModule } from 'ng-zorro-antd/button';
 import {
   HeaderComponent,
   AttachmentsListComponent,
@@ -14,8 +18,11 @@ import {
   selector: 'app-root',
   imports: [
     CommonModule,
+    FormsModule,
     NzLayoutModule,
     NzSplitterModule,
+    NzModalModule,
+    NzInputModule,
     HeaderComponent,
     AttachmentsListComponent,
     AttachmentDetailsComponent,
@@ -31,28 +38,26 @@ export class App {
   // Tab navigation
   protected readonly activeTab = signal<'files' | 'collections'>('files');
 
-  // Collections data (static for now)
-  protected readonly collections = signal([
-    { id: 1, name: 'Work Documents', count: 12 },
-    { id: 2, name: 'Personal', count: 8 },
-    { id: 3, name: 'Projects', count: 25 },
-    { id: 4, name: 'Archive', count: 45 },
-    { id: 5, name: 'Important', count: 6 },
-  ]);
+  // Collections data
+  protected readonly collections = signal<{ id: number; name: string; count: number }[]>([]);
   protected readonly selectedCollection = signal<{ id: number; name: string; count: number } | null>(null);
 
   // Global state signals for specific application components
   protected readonly attachmentSearchText = signal('');
   protected readonly isAddAttachmentModelVisible = signal(false);
+  protected readonly isAddCollectionModalVisible = signal(false);
   protected readonly isEditingAttachmentDetails = signal(false);
   protected readonly newAttachmentName = signal('');
   protected readonly newAttachmentFileName = signal('');
+  protected readonly newCollectionName = signal('');
   protected readonly isDragging = signal(false);
   protected readonly droppedFile = signal<File | null>(null);
 
   // Global application data signals
   protected readonly attachments = signal<Attachment[]>([]);
+  protected readonly collectionAttachments = signal<Attachment[]>([]);
   protected readonly selectedAttachment = signal<Attachment | null>(null);
+  protected readonly attachmentCollections = signal<{ id: number; name: string }[]>([]);
 
   // False when app loads, True once initial data has been loaded in from backend
   private isInitialized = false;
@@ -64,8 +69,9 @@ export class App {
   private attachmentDetailsComponent = viewChild(AttachmentDetailsComponent);
 
   constructor() {
-    // Load attachments on init
+    // Load attachments and collections on init
     this.loadAttachments();
+    this.loadCollections();
 
     // Auto-save selected attachment changes
     effect(() => {
@@ -89,6 +95,16 @@ export class App {
     }
   }
 
+  private async loadCollections() {
+    try {
+      const loadedCollections = await (window as any).electronAPI.listCollections();
+      this.collections.set(loadedCollections || []);
+    } catch (error) {
+      console.error('Failed to load collections:', error);
+      this.collections.set([]);
+    }
+  }
+
   private async updateAttachment(attachment: Attachment) {
     try {
       await (window as any).electronAPI.updateAttachment(attachment);
@@ -99,7 +115,7 @@ export class App {
 
   /**
    * Returns the list of attachments, properly filtered
-   * based on the current search text. 
+   * based on the current search text.
    */
   get filteredAttachments(): Attachment[] {
     const search = this.normalizeText(this.attachmentSearchText());
@@ -120,13 +136,53 @@ export class App {
     });
   }
 
+  /**
+   * Returns the list of collection attachments, properly filtered
+   * based on the current search text.
+   */
+  get filteredCollectionAttachments(): Attachment[] {
+    const search = this.normalizeText(this.attachmentSearchText());
+    const currentAttachments = this.collectionAttachments();
+
+    if (!search) {
+      return currentAttachments;
+    }
+
+    return currentAttachments.filter(attachment => {
+      const name = this.normalizeText(attachment.name);
+      const description = this.normalizeText(attachment.description);
+      const notes = this.normalizeText(attachment.notes);
+
+      return name.includes(search) ||
+             description.includes(search) ||
+             notes.includes(search);
+    });
+  }
+
+  /**
+   * Returns collections that the current attachment is NOT in
+   */
+  get availableCollections(): { id: number; name: string; count: number }[] {
+    const attachmentCollectionIds = this.attachmentCollections().map(c => c.id);
+    return this.collections().filter(c => !attachmentCollectionIds.includes(c.id));
+  }
+
   private normalizeText(text: string): string {
     return text.toLowerCase().replace(/[^\w\s]/g, '');
   }
 
-  selectAttachment(attachment: Attachment) {
+  async selectAttachment(attachment: Attachment) {
     this.selectedAttachment.set(attachment);
     this.isEditingAttachmentDetails.set(false);
+
+    // Load collections for this attachment
+    try {
+      const collections = await (window as any).electronAPI.getAttachmentCollections(attachment.id);
+      this.attachmentCollections.set(collections || []);
+    } catch (error) {
+      console.error('Failed to load attachment collections:', error);
+      this.attachmentCollections.set([]);
+    }
   }
 
   toggleEdit() {
@@ -433,19 +489,51 @@ export class App {
   }
 
   createNewCollection() {
-    // TODO: Implement create new collection
-    console.log('Create new collection clicked');
+    this.isAddCollectionModalVisible.set(true);
   }
 
-  selectCollection(collectionId: number) {
+  handleCollectionCancel() {
+    this.isAddCollectionModalVisible.set(false);
+    this.newCollectionName.set('');
+  }
+
+  async handleCollectionSubmit() {
+    if (!this.newCollectionName()) {
+      return;
+    }
+
+    try {
+      const newCollection = await (window as any).electronAPI.createCollection({
+        name: this.newCollectionName()
+      });
+
+      this.collections.update(collections => [...collections, newCollection]);
+      this.handleCollectionCancel();
+    } catch (error) {
+      console.error('Failed to create collection:', error);
+    }
+  }
+
+  async selectCollection(collectionId: number) {
     const collection = this.collections().find(c => c.id === collectionId);
     if (collection) {
       this.selectedCollection.set(collection);
+
+      // Load attachments for this collection
+      try {
+        const attachments = await (window as any).electronAPI.getCollectionAttachments(collectionId);
+        this.collectionAttachments.set(attachments || []);
+      } catch (error) {
+        console.error('Failed to load collection attachments:', error);
+        this.collectionAttachments.set([]);
+      }
     }
   }
 
   backToCollections() {
     this.selectedCollection.set(null);
+    this.collectionAttachments.set([]);
+    this.selectedAttachment.set(null);
   }
 
   addFilesToCollection() {
@@ -453,8 +541,58 @@ export class App {
     console.log('Add files to collection clicked');
   }
 
-  deleteCollection() {
-    // TODO: Implement delete collection
-    console.log('Delete collection clicked');
+  async deleteCollection() {
+    const collection = this.selectedCollection();
+    if (!collection) return;
+
+    try {
+      await (window as any).electronAPI.deleteCollection(collection.id);
+
+      // Remove from collections list
+      this.collections.update(collections =>
+        collections.filter(c => c.id !== collection.id)
+      );
+
+      // Go back to collections grid
+      this.backToCollections();
+    } catch (error) {
+      console.error('Failed to delete collection:', error);
+    }
+  }
+
+  async addToCollection(collectionId: number) {
+    const attachment = this.selectedAttachment();
+    if (!attachment) return;
+
+    try {
+      await (window as any).electronAPI.addAttachmentToCollection(collectionId, attachment.id);
+
+      // Reload attachment collections
+      const collections = await (window as any).electronAPI.getAttachmentCollections(attachment.id);
+      this.attachmentCollections.set(collections || []);
+
+      // Reload all collections to update counts
+      await this.loadCollections();
+    } catch (error) {
+      console.error('Failed to add attachment to collection:', error);
+    }
+  }
+
+  async removeFromCollection(collectionId: number) {
+    const attachment = this.selectedAttachment();
+    if (!attachment) return;
+
+    try {
+      await (window as any).electronAPI.removeAttachmentFromCollection(collectionId, attachment.id);
+
+      // Reload attachment collections
+      const collections = await (window as any).electronAPI.getAttachmentCollections(attachment.id);
+      this.attachmentCollections.set(collections || []);
+
+      // Reload all collections to update counts
+      await this.loadCollections();
+    } catch (error) {
+      console.error('Failed to remove attachment from collection:', error);
+    }
   }
 }

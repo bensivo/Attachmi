@@ -465,3 +465,24 @@ ipcMain.handle('removeAttachmentFromCollection', async (event, collectionId, att
         );
     });
 });
+
+ipcMain.handle('getAttachmentCollections', async (event, attachmentId) => {
+    console.log('ipc:getAttachmentCollections()');
+    return new Promise((resolve, reject) => {
+        db.all(`
+            SELECT c.id, c.name
+            FROM collections c
+            INNER JOIN collection_attachments ca ON c.id = ca.collection_id
+            WHERE ca.attachment_id = ?
+            ORDER BY c.name ASC
+        `, [attachmentId], (err, rows) => {
+            if (err) {
+                console.error('Error getting attachment collections:', err);
+                reject(err);
+            } else {
+                console.log('Loaded collections for attachment:', rows);
+                resolve(rows || []);
+            }
+        });
+    });
+});
