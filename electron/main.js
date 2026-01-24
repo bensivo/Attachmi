@@ -25,18 +25,54 @@ const initDatabase = async () => {
             if (err) {
                 reject(err);
             } else {
-                db.run(`
-                    CREATE TABLE IF NOT EXISTS attachments (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        name TEXT NOT NULL,
-                        date TEXT NOT NULL,
-                        description TEXT,
-                        notes TEXT,
-                        fileName TEXT
-                    )
-                `, (err) => {
-                    if (err) reject(err);
-                    else resolve();
+                // Run migrations in sequence
+                db.serialize(() => {
+                    // Create attachments table
+                    db.run(`
+                        CREATE TABLE IF NOT EXISTS attachments (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            name TEXT NOT NULL,
+                            date TEXT NOT NULL,
+                            description TEXT,
+                            notes TEXT,
+                            fileName TEXT
+                        )
+                    `, (err) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                    });
+
+                    // Create collections table
+                    db.run(`
+                        CREATE TABLE IF NOT EXISTS collections (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            name TEXT NOT NULL
+                        )
+                    `, (err) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                    });
+
+                    // Create collection_attachments junction table
+                    db.run(`
+                        CREATE TABLE IF NOT EXISTS collection_attachments (
+                            collection_id INTEGER NOT NULL,
+                            attachment_id INTEGER NOT NULL,
+                            PRIMARY KEY (collection_id, attachment_id),
+                            FOREIGN KEY (collection_id) REFERENCES collections(id) ON DELETE CASCADE,
+                            FOREIGN KEY (attachment_id) REFERENCES attachments(id) ON DELETE CASCADE
+                        )
+                    `, (err) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        resolve();
+                    });
                 });
             }
         });
@@ -292,5 +328,140 @@ ipcMain.handle('deleteAttachment', async (event, id) => {
                 resolve({ success: true });
             }
         });
+    });
+});
+
+// Collections IPC Handlers
+ipcMain.handle('listCollections', async (event) => {
+    console.log('ipc:listCollections()');
+    return new Promise((resolve, reject) => {
+        db.all(`
+            SELECT
+                c.id,
+                c.name,
+                COUNT(ca.attachment_id) as count
+            FROM collections c
+            LEFT JOIN collection_attachments ca ON c.id = ca.collection_id
+            GROUP BY c.id, c.name
+            ORDER BY c.id DESC
+        `, (err, rows) => {
+            if (err) {
+                console.error('Error listing collections:', err);
+                reject(err);
+            } else {
+                console.log('Loaded collections from DB:', rows);
+                resolve(rows || []);
+            }
+        });
+    });
+});
+
+ipcMain.handle('createCollection', async (event, collection) => {
+    console.log('ipc:createCollection()');
+    return new Promise((resolve, reject) => {
+        const { name } = collection;
+        db.run(
+            'INSERT INTO collections (name) VALUES (?)',
+            [name],
+            function (err) {
+                if (err) {
+                    console.error('Error creating collection:', err);
+                    reject(err);
+                } else {
+                    resolve({ id: this.lastID, name, count: 0 });
+                }
+            }
+        );
+    });
+});
+
+ipcMain.handle('updateCollection', async (event, collection) => {
+    console.log('ipc:updateCollection()');
+    return new Promise((resolve, reject) => {
+        const { id, name } = collection;
+        db.run(
+            'UPDATE collections SET name = ? WHERE id = ?',
+            [name, id],
+            function (err) {
+                if (err) {
+                    console.error('Error updating collection:', err);
+                    reject(err);
+                } else {
+                    resolve({ success: true });
+                }
+            }
+        );
+    });
+});
+
+ipcMain.handle('deleteCollection', async (event, id) => {
+    console.log('ipc:deleteCollection()');
+    return new Promise((resolve, reject) => {
+        db.run('DELETE FROM collections WHERE id = ?', [id], function (err) {
+            if (err) {
+                console.error('Error deleting collection:', err);
+                reject(err);
+            } else {
+                resolve({ success: true });
+            }
+        });
+    });
+});
+
+// Collection-Attachment Relationship Handlers
+ipcMain.handle('getCollectionAttachments', async (event, collectionId) => {
+    console.log('ipc:getCollectionAttachments()');
+    return new Promise((resolve, reject) => {
+        db.all(`
+            SELECT a.*
+            FROM attachments a
+            INNER JOIN collection_attachments ca ON a.id = ca.attachment_id
+            WHERE ca.collection_id = ?
+            ORDER BY a.id DESC
+        `, [collectionId], (err, rows) => {
+            if (err) {
+                console.error('Error getting collection attachments:', err);
+                reject(err);
+            } else {
+                console.log('Loaded attachments for collection:', rows);
+                resolve(rows || []);
+            }
+        });
+    });
+});
+
+ipcMain.handle('addAttachmentToCollection', async (event, collectionId, attachmentId) => {
+    console.log('ipc:addAttachmentToCollection()');
+    return new Promise((resolve, reject) => {
+        db.run(
+            'INSERT OR IGNORE INTO collection_attachments (collection_id, attachment_id) VALUES (?, ?)',
+            [collectionId, attachmentId],
+            function (err) {
+                if (err) {
+                    console.error('Error adding attachment to collection:', err);
+                    reject(err);
+                } else {
+                    resolve({ success: true });
+                }
+            }
+        );
+    });
+});
+
+ipcMain.handle('removeAttachmentFromCollection', async (event, collectionId, attachmentId) => {
+    console.log('ipc:removeAttachmentFromCollection()');
+    return new Promise((resolve, reject) => {
+        db.run(
+            'DELETE FROM collection_attachments WHERE collection_id = ? AND attachment_id = ?',
+            [collectionId, attachmentId],
+            function (err) {
+                if (err) {
+                    console.error('Error removing attachment from collection:', err);
+                    reject(err);
+                } else {
+                    resolve({ success: true });
+                }
+            }
+        );
     });
 });
