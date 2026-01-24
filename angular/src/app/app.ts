@@ -28,6 +28,19 @@ import {
 export class App {
   protected readonly title = signal('attachmi');
 
+  // Tab navigation
+  protected readonly activeTab = signal<'files' | 'collections'>('files');
+
+  // Collections data (static for now)
+  protected readonly collections = signal([
+    { id: 1, name: 'Work Documents', count: 12 },
+    { id: 2, name: 'Personal', count: 8 },
+    { id: 3, name: 'Projects', count: 25 },
+    { id: 4, name: 'Archive', count: 45 },
+    { id: 5, name: 'Important', count: 6 },
+  ]);
+  protected readonly selectedCollection = signal<{ id: number; name: string; count: number } | null>(null);
+
   // Global state signals for specific application components
   protected readonly attachmentSearchText = signal('');
   protected readonly isAddAttachmentModelVisible = signal(false);
@@ -405,7 +418,7 @@ export class App {
     const currentIndex = currentAttachments.findIndex(a => a.id === currentSelected.id);
     if (currentIndex === -1 || currentIndex === 0) {
       // Either the current item was not found (possible if we added a filter after selecting it)
-      // Or we're already at the beginning of the list. 
+      // Or we're already at the beginning of the list.
 
       // Go back to the end
       this.selectAttachment(currentAttachments[currentAttachments.length - 1]);
@@ -413,5 +426,35 @@ export class App {
 
     // Select previous item
     this.selectAttachment(currentAttachments[currentIndex - 1]);
+  }
+
+  switchTab(tab: 'files' | 'collections') {
+    this.activeTab.set(tab);
+  }
+
+  createNewCollection() {
+    // TODO: Implement create new collection
+    console.log('Create new collection clicked');
+  }
+
+  selectCollection(collectionId: number) {
+    const collection = this.collections().find(c => c.id === collectionId);
+    if (collection) {
+      this.selectedCollection.set(collection);
+    }
+  }
+
+  backToCollections() {
+    this.selectedCollection.set(null);
+  }
+
+  addFilesToCollection() {
+    // TODO: Implement add files to collection
+    console.log('Add files to collection clicked');
+  }
+
+  deleteCollection() {
+    // TODO: Implement delete collection
+    console.log('Delete collection clicked');
   }
 }
