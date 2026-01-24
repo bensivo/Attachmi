@@ -263,6 +263,18 @@ export class App {
     }
   }
 
+  async downloadFile(attachment: Attachment) {
+    if (!attachment.fileName) {
+      console.log('No file associated with this attachment');
+      return;
+    }
+
+    const result = await (window as any).electronAPI.downloadFile(attachment.fileName, attachment.name);
+    if (!result.success) {
+      console.error('Failed to download file:', result.error);
+    }
+  }
+
   async deleteAttachment(attachment: Attachment) {
     try {
       // Delete file from filesystem if it exists
@@ -339,6 +351,15 @@ export class App {
       event.preventDefault();
       if (this.selectedAttachment() && this.isEditingAttachmentDetails()) {
         this.toggleEdit();
+      }
+    }
+
+    // CMD+P (Mac) or Ctrl+P (Windows/Linux) - Download file
+    if ((event.metaKey || event.ctrlKey) && event.key === 'p') {
+      event.preventDefault();
+      const attachment = this.selectedAttachment();
+      if (attachment && attachment.fileName) {
+        this.downloadFile(attachment);
       }
     }
   }

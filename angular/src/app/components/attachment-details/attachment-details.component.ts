@@ -21,6 +21,7 @@ export class AttachmentDetailsComponent {
   toggleEdit = output<void>();
   deleteAttachment = output<void>();
   openFile = output<void>();
+  downloadFile = output<void>();
 
   // Reference to the title input field
   private titleInput = viewChild<ElementRef>('titleInput');
@@ -35,6 +36,10 @@ export class AttachmentDetailsComponent {
 
   onOpenFile() {
     this.openFile.emit();
+  }
+
+  onDownloadFile() {
+    this.downloadFile.emit();
   }
 
   focusTitleInput() {

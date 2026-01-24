@@ -1,4 +1,4 @@
-const { ipcMain, shell } = require('electron');
+const { ipcMain, shell, dialog } = require('electron');
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const fs = require('fs').promises;
@@ -162,6 +162,49 @@ ipcMain.handle('openFile', async (event, fileName) => {
         return { success: true };
     } catch (error) {
         console.error('Error opening file:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('downloadFile', async (event, fileName, displayName) => {
+    try {
+        const storageDir = getStorageDir();
+        const sourcePath = path.join(storageDir, fileName);
+
+        // Check if source file exists
+        await fs.access(sourcePath);
+
+        // Get the file extension from the internal filename
+        const ext = path.extname(fileName);
+
+        // Build the default filename using displayName + original extension
+        // Avoid duplicate extensions if displayName already ends with the same extension
+        const displayNameExt = path.extname(displayName);
+        const defaultFileName = displayNameExt.toLowerCase() === ext.toLowerCase()
+            ? displayName
+            : displayName + ext;
+
+        // Show save dialog
+        const { canceled, filePath: destPath } = await dialog.showSaveDialog({
+            defaultPath: path.join(app.getPath('downloads'), defaultFileName),
+            filters: [
+                { name: 'All Files', extensions: ['*'] }
+            ]
+        });
+
+        if (canceled || !destPath) {
+            return { success: false, canceled: true };
+        }
+
+        // Copy the file to the chosen location
+        await fs.copyFile(sourcePath, destPath);
+
+        // Open the folder and select the file
+        shell.showItemInFolder(destPath);
+
+        return { success: true, destPath };
+    } catch (error) {
+        console.error('Error downloading file:', error);
         return { success: false, error: error.message };
     }
 });

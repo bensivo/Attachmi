@@ -1,3 +1,10 @@
+- feature: collections of files
+  - [] Create collection 
+  - [] Browse collections
+  - [] Add new file to existing collection
+  - [] Add existing file to existing collection
+  - [] Add many files to a collection (like spotify's add-songs ui)
+  - [] Filter by collection only
 - feature: Description, screenshots, usage in Github. 
 - feature: bulk add files
 - task: Test on another macbook
@@ -8,7 +15,6 @@
 - feature: Better search, filtering on the left sidebar
 - bug: App name is all lowercase
 - bug: order of files in list is reversed from expected
-- feature: collections of files
 - feature: add links too (not just files)
 - bug: on small screen sizes, "edit" and "delete" buttons get hidden by title of attachment
 - feature: Help icon with all the keyboard shortcuts
