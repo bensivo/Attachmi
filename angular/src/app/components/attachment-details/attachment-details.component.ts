@@ -1,39 +1,31 @@
-import { Component, input, output, model, viewChild, ElementRef, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, input, output, model, viewChild, ElementRef, inject, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzSelectModule } from 'ng-zorro-antd/select';
-import { NzTagModule } from 'ng-zorro-antd/tag';
 import { Attachment } from '../attachments-list/attachments-list.component';
+import { StateService } from '../../services/state.service';
+import { AttachmentsService } from '../../services/attachments.service';
 
 @Component({
   selector: 'app-attachment-details',
   standalone: true,
   imports: [
-    CommonModule,
     FormsModule,
     NzInputModule,
-    NzButtonModule,
-    NzSelectModule,
-    NzTagModule
+    NzButtonModule
   ],
   templateUrl: './attachment-details.component.html',
   styleUrl: './attachment-details.component.less'
 })
 export class AttachmentDetailsComponent {
-  attachment = input<Attachment | null>(null);
-  isEditing = model.required<boolean>();
-  attachmentCollections = input<{ id: number; name: string }[]>([]);
-  availableCollections = input<{ id: number; name: string; count: number }[]>([]);
-  toggleEdit = output<void>();
-  deleteAttachment = output<void>();
-  openFile = output<void>();
-  downloadFile = output<void>();
-  addToCollection = output<number>();
-  removeFromCollection = output<number>();
+  private state = inject(StateService);
+  private attachmentsService = inject(AttachmentsService);
 
-  protected selectedCollectionId = signal<number | null>(null);
+  attachment = this.state.selectedAttachment;
+
+  isEditing = model.required<boolean>();
+  toggleEdit = output<void>();
+
 
   // Reference to the title input field
   private titleInput = viewChild<ElementRef>('titleInput');
@@ -42,33 +34,36 @@ export class AttachmentDetailsComponent {
     this.toggleEdit.emit();
   }
 
-  onDelete() {
-    this.deleteAttachment.emit();
+  onClickDeleteFile() {
+    const attachment = this.attachment();
+    if (!attachment) {
+      return;
+    }
+
+    this.attachmentsService.deleteAttachment(attachment)
   }
 
-  onOpenFile() {
-    this.openFile.emit();
+  ononClickOpenFile() {
+    const attachment = this.attachment();
+    if (!attachment) {
+      return;
+    }
+
+    this.attachmentsService.openAttachment(attachment)
   }
 
-  onDownloadFile() {
-    this.downloadFile.emit();
+  ononClickDownloadFile() {
+    const attachment = this.attachment();
+    if (!attachment) {
+      return;
+    }
+
+    this.attachmentsService.downloadAttachment(attachment)
   }
 
   focusTitleInput() {
     setTimeout(() => {
       this.titleInput()?.nativeElement.focus();
     }, 0);
-  }
-
-  onAddToCollection() {
-    const collectionId = this.selectedCollectionId();
-    if (collectionId) {
-      this.addToCollection.emit(collectionId);
-      this.selectedCollectionId.set(null);
-    }
-  }
-
-  onRemoveFromCollection(collectionId: number) {
-    this.removeFromCollection.emit(collectionId);
   }
 }

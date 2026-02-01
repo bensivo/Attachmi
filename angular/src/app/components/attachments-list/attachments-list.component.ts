@@ -1,5 +1,7 @@
-import { Component, input, output, effect } from '@angular/core';
+import { Component, input, output, effect, inject, computed } from '@angular/core';
 import { NzListModule } from 'ng-zorro-antd/list';
+import { StateService } from '../../services/state.service';
+import { AttachmentsService } from '../../services/attachments.service';
 
 export interface Attachment {
   id: number;
@@ -18,9 +20,19 @@ export interface Attachment {
   styleUrl: './attachments-list.component.less'
 })
 export class AttachmentsListComponent {
-  attachments = input.required<Attachment[]>();
-  selectedId = input<number | null>(null);
-  selectAttachment = output<Attachment>();
+  private state = inject(StateService);
+  private attachmentsService = inject(AttachmentsService);
+
+  attachments = this.state.filteredAttachments;
+
+  selectedId = computed(() => {
+    const selectedAttachment = this.state.selectedAttachment();
+    if (selectedAttachment) {
+      return selectedAttachment.id;
+    } else {
+      return null;
+    }
+  })
 
   constructor() {
     // Auto-scroll to selected item when it changes
@@ -44,7 +56,7 @@ export class AttachmentsListComponent {
     });
   }
 
-  onSelect(attachment: Attachment) {
-    this.selectAttachment.emit(attachment);
+  onClickAttachment(attachment: Attachment) {
+    this.attachmentsService.selectAttachment(attachment);
   }
 }

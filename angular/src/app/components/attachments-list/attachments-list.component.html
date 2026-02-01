@@ -6,7 +6,7 @@
         class="attachment-list-item"
         [class.active]="selectedId() === item.id"
         [attr.data-id]="item.id"
-        (click)="onSelect(item)"
+        (click)="onClickAttachment(item)"
       >
         <nz-list-item-meta
           [nzTitle]="item.name"

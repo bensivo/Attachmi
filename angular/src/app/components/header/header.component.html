@@ -7,8 +7,7 @@
         nz-input
         type="text"
         placeholder="Search attachments...(⌘+F)"
-        [ngModel]="searchTerm()"
-        (ngModelChange)="searchTerm.set($event)"
+        [(ngModel)]="searchText"
         class="search-input"
       />
     </div>

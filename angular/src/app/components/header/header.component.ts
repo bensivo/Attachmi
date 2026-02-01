@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { StateService } from '../../services/state.service';
 
 @Component({
   selector: 'app-header',
@@ -18,10 +19,17 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 })
 export class HeaderComponent {
   title = input.required<string>();
-  searchTerm = model.required<string>();
   addAttachment = output<void>();
-
   searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
+
+  constructor(
+    private state: StateService
+  ){}
+
+  get searchText() {
+    return this.state.attachmentSearchText;
+  }
+
 
   onAddClick() {
     this.addAttachment.emit();
