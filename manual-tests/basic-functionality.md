@@ -18,6 +18,20 @@ Steps:
 - Select an attachment
 - Click "Delete"
 
+### TC - Delete attachment - Selects next
+Steps:
+- Select an attachment
+- Click "Delete"
+- Verify next attachment is selected (if applicable)
+
+### TC - Delete attachment - Selects null if last
+Steps:
+- Select an attachment
+- Use filters or somethign ot make this the last attachment visible
+- Click "Delete"
+- Verify the 'details' section goes empty
+
+
 ### TC - Edit attachment name, date, description
 Steps: 
 - Select an attachment
